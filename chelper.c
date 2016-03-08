@@ -2,9 +2,16 @@
 #include <stdio.h>
 #include <string.h>
 #ifdef BENCHMARK_CHELP
-#include <sys/time.h> 
+#include <sys/time.h>
 #endif
 #include "chelper.h"
+
+extern int
+onig_new_default(regex_t** reg, const UChar* pattern, const UChar* pattern_end,
+    OnigOptionType option, OnigErrorInfo* einfo)
+{
+  return onig_new(reg, pattern, pattern_end, option, ONIG_ENCODING_UTF8, OnigDefaultSyntax, einfo);
+}
 
 int NewOnigRegex( char *pattern, int pattern_length, int option,
                   OnigRegex *regex, OnigRegion **region, OnigErrorInfo **error_info, char **error_buffer) {
@@ -24,7 +31,7 @@ int NewOnigRegex( char *pattern, int pattern_length, int option,
     *region = onig_region_new();
 
     ret = onig_new_default(regex, pattern_start, pattern_end, (OnigOptionType)(option), *error_info);
-  
+
     if (ret != ONIG_NORMAL) {
         error_msg_len = onig_error_code_to_str((unsigned char*)(*error_buffer), ret, *error_info);
         if (error_msg_len >= ONIG_MAX_ERROR_MESSAGE_LEN) {
@@ -140,22 +147,22 @@ int name_callback(const UChar* name, const UChar* name_end,
 {
 	int nameLen, offset, newOffset;
 	group_info_t *groupInfo;
-	
+
 	groupInfo = (group_info_t*) arg;
 	offset = groupInfo->bufferOffset;
 	nameLen = name_end - name;
 	newOffset = offset + nameLen;
-	
+
 	//if there are already names, add a ";"
 	if (offset > 0) {
 		newOffset += 1;
 	}
-	
+
 	if (newOffset <= groupInfo->bufferSize) {
 		if (offset > 0) {
 			groupInfo->nameBuffer[offset] = ';';
 			offset += 1;
-		} 
+		}
 		strncpy(&groupInfo->nameBuffer[offset], name, nameLen);
 	}
 	groupInfo->bufferOffset = newOffset;
@@ -179,4 +186,3 @@ int GetCaptureNames(OnigRegex reg, void *buffer, int bufferSize, int* groupNumbe
 	onig_foreach_name(reg, name_callback, (void* )&groupInfo);
 	return groupInfo.bufferOffset;
 }
-
